@@ -212,22 +212,19 @@ let user = null;
 
 /* ===== AUTH STATE ===== */
 onAuthStateChanged(auth, async (u) => {
+  user = u || null;
+
+  // wait for DOM to be ready
+  setTimeout(() => updateAuthUI(!!u), 0);
+
   if (u) {
-    user = u;
     console.log("Logged in:", u.email);
-
-    document.getElementById("loginBtn").style.display = "none";
-    document.getElementById("logoutBtn").style.display = "inline-block";
-
     await loadCloud();
   } else {
-    user = null;
     console.log("Logged out");
-
-    document.getElementById("loginBtn").style.display = "inline-block";
-    document.getElementById("logoutBtn").style.display = "none";
   }
 });
+
 
 /* ===== HANDLE REDIRECT RESULT ===== */
 getRedirectResult(auth).catch(err =>
@@ -261,6 +258,22 @@ window.cloudSave = async function (data) {
   if (!user) return;
   await setDoc(doc(db, "users", user.uid), data);
 };
+
+function updateAuthUI(loggedIn) {
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (!loginBtn || !logoutBtn) return;
+
+  if (loggedIn) {
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+  } else {
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+  }
+}
+
 </script>
 
 
