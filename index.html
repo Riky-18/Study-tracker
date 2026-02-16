@@ -153,9 +153,11 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithRedirect,
+  signInWithPopup,   // 👈 ADD THIS LINE
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
   getFirestore,
   doc,
@@ -194,7 +196,15 @@ onAuthStateChanged(auth, async (u) => {
 });
 
 /* LOGIN / LOGOUT */
-window.login = () => signInWithRedirect(auth, provider);
+window.login = async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    console.error("Login failed:", e);
+  }
+};
+
+
 window.logout = () => signOut(auth);
 
 /* CLOUD */
