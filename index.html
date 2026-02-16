@@ -255,9 +255,11 @@ function toggleTheme(){
 
 /* SAVE */
 function save(){
- localStorage.setItem("unicorn",JSON.stringify(data));
- if(window.cloudSave) cloudSave(data);
+  calculateXP(); // ✅ always recompute XP
+  localStorage.setItem("unicorn",JSON.stringify(data));
+  if(window.cloudSave) cloudSave(data);
 }
+
 
 /* PROGRESS + RENDER (UNCHANGED) */
 function percent(t){let d=0;for(let i=1;i<=31;i+=2) if(t.progress[i]) d++;return Math.round(d/16*100);}
@@ -269,7 +271,17 @@ function selectSub(i){selected=i;render();}
 
 function addTopic(){let n=prompt("Topic name");if(!n)return;data.subjects[selected].topics.push({name:n,progress:{}});save();render();}
 function deleteTopic(j){if(confirm("Delete topic?")){data.subjects[selected].topics.splice(j,1);save();render();}}
-function toggle(i,j,d){let t=data.subjects[i].topics[j];t.progress[d]=!t.progress[d];data.xp+=5;save();render();}
+function calculateXP(){
+  let xp = 0;
+  data.subjects.forEach(s =>
+    s.topics.forEach(t =>
+      Object.values(t.progress).forEach(v => {
+        if(v) xp += 5;
+      })
+    )
+  );
+  data.xp = xp;
+}
 
 function render(){
  renderLeft();renderCenter();renderRight();syncAuthUI();
