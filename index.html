@@ -320,10 +320,110 @@ function renderCenter(){
  }).join('')}</div></div>`).join('')}</div>`;
 }
 function renderRight(){
- right.innerHTML=`<div class="card"><h3>📊 Dashboard</h3><div class="big">${data.xp}</div>XP Points
- <p><b>Overall:</b> ${overall()}%</p>
- <div class="progress"><div class="fill" style="width:${overall()}%"></div></div></div>`;
+
+  let overallProgress = overall();
+
+  right.innerHTML = `
+    <div class="card">
+      <h3>📊 Dashboard</h3>
+
+      <!-- Circular Animated Overall Progress -->
+      <div style="display:flex;justify-content:center;margin:30px 0;">
+        <div style="position:relative;width:170px;height:170px;">
+
+          <svg width="170" height="170">
+            <!-- Background circle -->
+            <circle cx="85" cy="85" r="70"
+              stroke="#e5e7eb"
+              stroke-width="14"
+              fill="none"/>
+
+            <!-- Animated progress circle -->
+            <circle id="progressCircle"
+              cx="85" cy="85" r="70"
+              stroke="#22c55e"
+              stroke-width="14"
+              fill="none"
+              stroke-linecap="round"
+              stroke-dasharray="440"
+              stroke-dashoffset="440"
+              transform="rotate(-90 85 85)"/>
+          </svg>
+
+          <!-- Percentage inside circle -->
+          <div id="circleText"
+            style="
+              position:absolute;
+              top:50%;
+              left:50%;
+              transform:translate(-50%,-50%);
+              font-size:32px;
+              font-weight:bold;
+              color:#22c55e;">
+            0%
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Subject-wise Breakdown -->
+      <div>
+        ${data.subjects.map(s=>{
+          let total = 0, count = 0;
+          s.topics.forEach(t=>{
+            total += percent(t);
+            count++;
+          });
+          let subPercent = count ? Math.round(total/count) : 0;
+
+          return `
+            <div style="margin-bottom:14px;">
+              <b>${s.name}</b> (${subPercent}%)
+              <div class="progress">
+                <div class="fill" style="width:${subPercent}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+    </div>
+  `;
+
+  animateCircle(overallProgress);
 }
+
+
+
+function animateCircle(percent){
+
+  const circle = document.getElementById("progressCircle");
+  const text = document.getElementById("circleText");
+
+  if(!circle) return;
+
+  const radius = 70;
+  const circumference = 2 * Math.PI * radius;
+
+  circle.style.strokeDasharray = circumference;
+  circle.style.strokeDashoffset = circumference;
+
+  let current = 0;
+
+  const animation = setInterval(()=>{
+    if(current >= percent){
+      clearInterval(animation);
+    } else {
+      current++;
+      const offset = circumference - (current/100) * circumference;
+      circle.style.strokeDashoffset = offset;
+      text.innerText = current + "%";
+    }
+  }, 15);
+}
+
+
+
 
 
 /* ===== LIVE ANALYTICS ===== */
