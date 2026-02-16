@@ -272,15 +272,19 @@ function toggle(i, j, d) {
 
 /* PROGRESS + RENDER (UNCHANGED) */
 function percent(t){
-  const totalDays = 16; // total visible tick boxes
+  let total = 0;
   let completed = 0;
 
   for(let i = 1; i <= 31; i += 2){
-    if(t.progress[i]) completed++;
+    total++;
+    if(t.progress[i] === true){
+      completed++;
+    }
   }
 
-  return totalDays ? Math.round((completed / totalDays) * 100) : 0;
+  return total ? Math.round((completed / total) * 100) : 0;
 }
+
 
 function overall(){
   let completed = 0;
@@ -290,13 +294,16 @@ function overall(){
     subject.topics.forEach(topic => {
       for(let i = 1; i <= 31; i += 2){
         total++;
-        if(topic.progress[i]) completed++;
+        if(topic.progress[i] === true){
+          completed++;
+        }
       }
     });
   });
 
   return total ? Math.round((completed / total) * 100) : 0;
 }
+
 
 
 function addSubject(){let n=prompt("Subject name");if(!n)return;data.subjects.push({name:n,topics:[]});save();render();}
@@ -310,9 +317,9 @@ function calculateXP(){
 
   data.subjects.forEach(subject => {
     subject.topics.forEach(topic => {
-      for (let day in topic.progress) {
-        if (topic.progress[day] === true) {
-          xp += 5;
+      for(let i = 1; i <= 31; i += 2){
+        if(topic.progress[i] === true){
+          xp += 5; // 5 XP per completed day
         }
       }
     });
@@ -320,6 +327,7 @@ function calculateXP(){
 
   data.xp = xp;
 }
+
 
 
 function render(){
