@@ -130,7 +130,14 @@ button{
 <body>
 
 <canvas id="particles"></canvas>
-<header>Tracking Progress 🚀</header>
+<header>
+  Tracking Progress 🚀
+  <div id="userProfile" style="font-size:13px;margin-top:6px;display:none">
+    <img id="userPic" style="width:26px;height:26px;border-radius:50%;vertical-align:middle">
+    <span id="userName"></span>
+  </div>
+</header>
+
 
 <div class="main">
   <div id="left"></div>
@@ -188,9 +195,14 @@ onAuthStateChanged(auth, async (u) => {
     user = u;
     window.isLoggedIn = true;
     await loadCloud();
+    document.getElementById("userProfile").style.display = "block";
+document.getElementById("userName").textContent = u.displayName;
+document.getElementById("userPic").src = u.photoURL;
+
   } else {
     user = null;
     window.isLoggedIn = false;
+    document.getElementById("userProfile").style.display = "none";
   }
   syncAuthUI();
 });
