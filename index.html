@@ -282,15 +282,20 @@ function addTopic(){let n=prompt("Topic name");if(!n)return;data.subjects[select
 function deleteTopic(j){if(confirm("Delete topic?")){data.subjects[selected].topics.splice(j,1);save();render();}}
 function calculateXP(){
   let xp = 0;
-  data.subjects.forEach(s =>
-    s.topics.forEach(t =>
-      Object.values(t.progress).forEach(v => {
-        if(v) xp += 5;
-      })
-    )
-  );
+
+  data.subjects.forEach(subject => {
+    subject.topics.forEach(topic => {
+      for (let day in topic.progress) {
+        if (topic.progress[day] === true) {
+          xp += 5;
+        }
+      }
+    });
+  });
+
   data.xp = xp;
 }
+
 
 function render(){
  renderLeft();renderCenter();renderRight();syncAuthUI();
