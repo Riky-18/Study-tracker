@@ -259,6 +259,15 @@ function save(){
   localStorage.setItem("unicorn",JSON.stringify(data));
   if(window.cloudSave) cloudSave(data);
 }
+function toggle(i, j, d) {
+  let t = data.subjects[i].topics[j];
+
+  // toggle true/false
+  t.progress[d] = !t.progress[d];
+
+  save();   // XP will be recalculated here
+  render();
+}
 
 
 /* PROGRESS + RENDER (UNCHANGED) */
