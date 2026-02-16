@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Study Tracker</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+
+<style>
+:root{
+ --primary:#22c55e;
+ --bg:#eef3f8;
+ --glass:rgba(255,255,255,.65);
+ --text:#0f172a;
+ --shadow:0 12px 35px rgba(0,0,0,.12);
+}
+.dark{
+ --bg:#08111f;
+ --glass:rgba(30,41,59,.55);
+ --text:#f8fafc;
+}
+
+body{
+ margin:0;
+ font-family:Segoe UI;
+ background:var(--bg);
+ color:var(--text);
+ overflow-x:hidden;
+}
+
+#particles{
+ position:fixed;
+ inset:0;
+ z-index:0;
+ pointer-events:none;
+}
+
+header{
+ background:linear-gradient(135deg,#22c55e,#16a34a);
+ color:white;
+ text-align:center;
+ padding:14px;
+ font-size:22px;
+ font-weight:600;
+}
+
+header,.main,.bottom{
+ position:relative;
+ z-index:1;
+}
+
+.main{
+ display:grid;
+ grid-template-columns:1fr 1.5fr 1fr;
+ gap:16px;
+ padding:16px;
+ padding-bottom:90px;
+}
+
+@media(max-width:900px){
+ .main{grid-template-columns:1fr;padding:10px;}
+}
+
+.card{
+ background:var(--glass);
+ backdrop-filter:blur(12px);
+ border-radius:16px;
+ padding:14px;
+ box-shadow:var(--shadow);
+ margin-bottom:12px;
+}
+
+.subject{
+ padding:10px;
+ border-radius:10px;
+ background:rgba(34,197,94,.15);
+ margin-bottom:6px;
+ cursor:pointer;
+ touch-action:pan-y;
+}
+.subject.active{
+ background:#22c55e;
+ color:white;
+}
+
+.topic{
+ background:rgba(255,255,255,.6);
+ padding:10px;
+ border-radius:12px;
+ margin-top:10px;
+ touch-action:pan-y;
+}
+.dark .topic{background:rgba(15,23,42,.6);}
+
+.progress{
+ height:10px;
+ background:#ddd;
+ border-radius:10px;
+ margin:10px 0 14px;
+ overflow:hidden;
+}
+.fill{
+ height:100%;
+ background:linear-gradient(90deg,#22c55e,#4ade80);
+}
+
+.days{
+ display:flex;
+ gap:10px;
+ overflow-x:auto;
+ -webkit-overflow-scrolling:touch;
+}
+
+.tick{
+ width:34px;height:34px;
+ border:2px solid #22c55e;
+ border-radius:10px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ cursor:pointer;
+ background:white;
+}
+.dark .tick{background:#08111f;}
+.tick.checked{background:#22c55e;color:white;}
+
+.small{text-align:center;font-size:11px}
+.big{font-size:28px;font-weight:bold;color:#22c55e;}
+
+.bottom{
+ position:fixed;
+ bottom:10px;
+ left:50%;
+ transform:translateX(-50%);
+ background:var(--glass);
+ padding:8px 14px;
+ border-radius:12px;
+ display:flex;
+ gap:8px;
+}
+button{
+ background:#22c55e;
+ color:white;
+ border:none;
+ padding:7px 12px;
+ border-radius:10px;
+ cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<header>Tracking Progress 🚀</header>
+
+<div class="main">
+<div id="left"></div>
+<div id="center"></div>
+<div id="right"></div>
+</div>
+
+<div class="bottom">
+<button onclick="toggleTheme()">🌙 Theme</button>
+<button onclick="addSubject()">+ Subject</button>
+<button id="installBtn" style="display:none">⬇ Install</button>
+</div>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithRedirect,
+  getRedirectResult
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import { getFirestore, doc, setDoc, getDoc }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* YOUR CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyAl6_USkJ4K2fM4shbtEDCOwH-QO5SU4ks",
+  authDomain: "study-tracker-ir.firebaseapp.com",
+  projectId: "study-tracker-ir",
+  storageBucket: "study-tracker-ir.firebasestorage.app",
+  messagingSenderId: "824985015855",
+  appId: "1:824985015855:web:ee35ed66ba20a5d79918da",
+  measurementId: "G-8RMZ714WG2"
+};
+getRedirectResult(auth)
+  .then(result => {
+    if (result && result.user) {
+      user = result.user;
+      console.log("Redirect login success:", user.email);
+      loadCloud();
+    }
+  })
+  .catch(err => {
+    console.error("Redirect login error:", err.code, err.message);
+  });
+
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getFirestore();
+const provider = new GoogleAuthProvider();
+
+let user;
+
+/* GOOGLE LOGIN */
+console.log("Starting Google login...");
+
+signInWithRedirect(auth, provider).then(res=>{
+  user = res.user;
+  loadCloud();
+}).catch(err => {
+  console.error("AUTH ERROR:", err.code, err.message);
+});
+
+/* LOAD FROM CLOUD */
+async function loadCloud(){
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(snap.exists()){
+    window.data = snap.data();
+    window.render();
+  }
+}
+
+/* SAVE TO CLOUD (global function) */
+window.cloudSave = async function(data){
+  if(user){
+    await setDoc(doc(db,"users",user.uid), data);
+  }
+};
+
+</script>
+
+
+<script>
+    
+
+/* ===== DATA ===== */
+let data=JSON.parse(localStorage.getItem("unicorn"))||{
+ subjects:[],
+ xp:0
+};
+let selected=0;
+
+/* ===== THEME AUTO SAVE ===== */
+let theme=localStorage.getItem("theme");
+if(theme==="dark") document.body.classList.add("dark");
+
+function toggleTheme(){
+ document.body.classList.toggle("dark");
+ localStorage.setItem("theme",
+   document.body.classList.contains("dark")?"dark":"light"
+ );
+}
+
+/* ===== SAVE ===== */
+function save(){
+ localStorage.setItem("unicorn",JSON.stringify(data));
+ if(window.cloudSave) cloudSave(data);
+}
+
+
+/* ===== PROGRESS ===== */
+function percent(t){
+ let d=0;
+ for(let i=1;i<=31;i+=2)
+  if(t.progress[i]) d++;
+ return Math.round(d/16*100);
+}
+function overall(){
+ let s=0,c=0;
+ data.subjects.forEach(a=>{
+  a.topics.forEach(t=>{s+=percent(t);c++;});
+ });
+ return c?Math.round(s/c):0;
+}
+
+/* ===== SUBJECT ===== */
+function addSubject(){
+ let n=prompt("Subject name");
+ if(!n)return;
+ data.subjects.push({name:n,topics:[]});
+ save();render();
+}
+function deleteSubject(i){
+ if(confirm("Delete subject?")){
+  data.subjects.splice(i,1);
+  selected=0;
+  save();render();
+ }
+}
+function selectSub(i){selected=i;render();}
+
+/* ===== TOPIC ===== */
+function addTopic(){
+ let n=prompt("Topic name");
+ if(!n)return;
+ data.subjects[selected].topics.push({name:n,progress:{}});
+ save();render();
+}
+function deleteTopic(j){
+ if(confirm("Delete topic?")){
+  data.subjects[selected].topics.splice(j,1);
+  save();render();
+ }
+}
+function toggle(i,j,d){
+ let t=data.subjects[i].topics[j];
+ t.progress[d]=!t.progress[d];
+ data.xp+=5;
+ save();render();
+}
+
+/* ===== SWIPE DELETE ===== */
+function swipeDelete(el,callback){
+ let startX=0;
+ el.addEventListener("touchstart",e=>{
+   startX=e.touches[0].clientX;
+ });
+ el.addEventListener("touchend",e=>{
+   let endX=e.changedTouches[0].clientX;
+   if(startX-endX>80) callback();
+ });
+}
+
+/* ===== RENDER LEFT ===== */
+function renderLeft(){
+ document.getElementById("left").innerHTML=
+ `<div class="card"><h3>📚 Subjects</h3>
+ ${data.subjects.map((s,i)=>
+ `<div class="subject ${selected===i?'active':''}" id="sub${i}">
+ ${s.name}
+ <span style="float:right;cursor:pointer"
+ onclick="event.stopPropagation();deleteSubject(${i})">❌</span>
+ </div>`
+ ).join('')}
+ </div>`;
+
+ data.subjects.forEach((s,i)=>{
+  swipeDelete(document.getElementById("sub"+i),
+   ()=>deleteSubject(i));
+ });
+}
+
+/* ===== CENTER ===== */
+function renderCenter(){
+ if(!data.subjects[selected]){
+  document.getElementById("center").innerHTML=
+  `<div class="card">Add subject 👍</div>`;
+  return;
+ }
+
+ let s=data.subjects[selected];
+ let html=`<div class="card">
+ <h3>${s.name} <button onclick="addTopic()">+ Topic</button></h3>`;
+
+ s.topics.forEach((t,j)=>{
+ html+=`
+ <div class="topic" id="topic${j}">
+ <b>${t.name}</b>
+<span style="float:right;cursor:pointer"
+ onclick="deleteTopic(${j})">❌</span>
+(${percent(t)}%)
+
+ <div class="progress"><div class="fill"
+ style="width:${percent(t)}%"></div></div>
+ <div class="days">`;
+
+ for(let d=1;d<=31;d+=2){
+  let c=t.progress[d]?"checked":"";
+  html+=`<div class="small">
+  <div class="tick ${c}"
+  onclick="toggle(${selected},${j},${d})">✔</div>${d}
+  </div>`;
+ }
+ html+=`</div></div>`;
+ });
+
+ html+=`</div>`;
+ document.getElementById("center").innerHTML=html;
+
+ s.topics.forEach((t,j)=>{
+  swipeDelete(document.getElementById("topic"+j),
+   ()=>deleteTopic(j));
+ });
+}
+
+/* ===== RIGHT ===== */
+function renderRight(){
+ document.getElementById("right").innerHTML=
+ `<div class="card">
+ <h3>📊 Dashboard</h3>
+ <div class="big">${data.xp}</div>
+ XP Points
+ <p><b>Overall:</b> ${overall()}%</p>
+ <div class="progress">
+ <div class="fill" style="width:${overall()}%"></div>
+ </div></div>`;
+}
+/* ===== LIVE ANALYTICS ADD-ON (NO CODE CHANGES) ===== */
+
+function drawLiveAnalytics(){
+ const c=document.getElementById("liveChart");
+ if(!c) return;
+
+ const ctx=c.getContext("2d");
+ ctx.clearRect(0,0,c.width,c.height);
+
+ let values=[];
+ data.subjects.forEach(s=>
+   s.topics.forEach(t=>values.push(percent(t)))
+ );
+
+ if(values.length===0) return;
+
+ ctx.beginPath();
+ ctx.moveTo(0,160);
+
+ values.forEach((v,i)=>{
+   ctx.lineTo((i+1)*35,160-v*1.3);
+ });
+
+ ctx.strokeStyle="#22c55e";
+ ctx.lineWidth=3;
+ ctx.stroke();
+}
+
+/* inject analytics card automatically */
+function injectAnalytics(){
+ const right=document.getElementById("right");
+ if(!right) return;
+
+ // avoid duplicate card
+ if(document.getElementById("liveChart")) return;
+
+ right.innerHTML += `
+ <div class="card">
+   <h3>📈 Live Analytics</h3>
+   <canvas id="liveChart" width="300" height="180"></canvas>
+ </div>`;
+  
+ setTimeout(drawLiveAnalytics,100);
+}
+
+/* auto run after every render */
+const oldRender = render;
+render = function(){
+ oldRender();
+ injectAnalytics();
+};
+
+
+/* ===== PARTICLES ===== */
+const canvas=document.getElementById("particles");
+const ctx=canvas.getContext("2d");
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
+addEventListener("resize",resize);resize();
+
+let p=[...Array(60)].map(()=>({
+ x:Math.random()*canvas.width,
+ y:Math.random()*canvas.height,
+ vx:(Math.random()-.5)*.6,
+ vy:(Math.random()-.5)*.6
+}));
+
+(function anim(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ p.forEach(a=>{
+  a.x+=a.vx;a.y+=a.vy;
+  if(a.x<0||a.x>canvas.width)a.vx*=-1;
+  if(a.y<0||a.y>canvas.height)a.vy*=-1;
+  ctx.beginPath();
+  ctx.arc(a.x,a.y,2,0,6.28);
+  ctx.fillStyle="rgba(34,197,94,.35)";
+  ctx.fill();
+ });
+ requestAnimationFrame(anim);
+})();
+
+/* ===== INSTALL PWA ===== */
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt",(e)=>{
+ e.preventDefault();
+ deferredPrompt=e;
+ document.getElementById("installBtn").style.display="block";
+});
+
+document.getElementById("installBtn").onclick=()=>{
+ deferredPrompt.prompt();
+};
+
+/* ===== MAIN ===== */
+function render(){
+ renderLeft();
+ renderCenter();
+ renderRight();
+}
+render();
+
+</script>
+</body>
+</html>
