@@ -170,74 +170,73 @@ button{
 <button id="installBtn" style="display:none">⬇ Install</button>
 </div>
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { getFirestore, doc, setDoc, getDoc }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* YOUR CONFIG */
+/* ===== FIREBASE CONFIG ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyAl6_USkJ4K2fM4shbtEDCOwH-QO5SU4ks",
   authDomain: "study-tracker-ir.firebaseapp.com",
   projectId: "study-tracker-ir",
   storageBucket: "study-tracker-ir.firebasestorage.app",
   messagingSenderId: "824985015855",
-  appId: "1:824985015855:web:ee35ed66ba20a5d79918da",
-  measurementId: "G-8RMZ714WG2"
+  appId: "1:824985015855:web:ee35ed66ba20a5d79918da"
 };
-getRedirectResult(auth)
-  .then(result => {
-    if (result && result.user) {
-      user = result.user;
-      console.log("Redirect login success:", user.email);
-      loadCloud();
-    }
-  })
-  .catch(err => {
-    console.error("Redirect login error:", err.code, err.message);
-  });
 
-
+/* ===== INIT ===== */
 const app = initializeApp(firebaseConfig);
-const auth = getAuth();
-const db = getFirestore();
+const auth = getAuth(app);
+const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-let user;
+let user = null;
 
-/* GOOGLE LOGIN */
-console.log("Starting Google login...");
-
-signInWithRedirect(auth, provider).then(res=>{
-  user = res.user;
-  loadCloud();
-}).catch(err => {
-  console.error("AUTH ERROR:", err.code, err.message);
+/* ===== LOGIN STATE ===== */
+onAuthStateChanged(auth, async (u) => {
+  if (u) {
+    user = u;
+    console.log("Logged in:", user.email);
+    await loadCloud();
+  } else {
+    console.log("Not logged in → redirecting");
+    signInWithRedirect(auth, provider);
+  }
 });
 
-/* LOAD FROM CLOUD */
-async function loadCloud(){
-  const snap = await getDoc(doc(db,"users",user.uid));
-  if(snap.exists()){
-    window.data = snap.data();
-    window.render();
+/* ===== REDIRECT RESULT (SAFE) ===== */
+getRedirectResult(auth).catch(err =>
+  console.error("Redirect error:", err.code)
+);
+
+/* ===== LOAD FROM CLOUD ===== */
+async function loadCloud() {
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    data = snap.data();                 // overwrite local data
+    localStorage.setItem("unicorn", JSON.stringify(data));
+    render();
   }
 }
 
-/* SAVE TO CLOUD (global function) */
-window.cloudSave = async function(data){
-  if(user){
-    await setDoc(doc(db,"users",user.uid), data);
-  }
+/* ===== SAVE TO CLOUD ===== */
+window.cloudSave = async function (data) {
+  if (!user) return;
+  await setDoc(doc(db, "users", user.uid), data);
 };
-
 </script>
 
 
