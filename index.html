@@ -165,10 +165,16 @@ button{
 </div>
 
 <div class="bottom">
-<button onclick="toggleTheme()">🌙 Theme</button>
-<button onclick="addSubject()">+ Subject</button>
-<button id="installBtn" style="display:none">⬇ Install</button>
+  <button onclick="toggleTheme()">🌙 Theme</button>
+  <button onclick="addSubject()">+ Subject</button>
+
+  <!-- AUTH BUTTONS -->
+  <button id="loginBtn" onclick="login()">🔐 Login</button>
+  <button id="logoutBtn" onclick="logout()" style="display:none">🚪 Logout</button>
+
+  <button id="installBtn" style="display:none">⬇ Install</button>
 </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -176,7 +182,8 @@ import {
   GoogleAuthProvider,
   signInWithRedirect,
   getRedirectResult,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
@@ -185,7 +192,7 @@ import {
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* ===== FIREBASE CONFIG ===== */
+/* ===== CONFIG ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyAl6_USkJ4K2fM4shbtEDCOwH-QO5SU4ks",
   authDomain: "study-tracker-ir.firebaseapp.com",
@@ -203,41 +210,59 @@ const provider = new GoogleAuthProvider();
 
 let user = null;
 
-/* ===== LOGIN STATE ===== */
+/* ===== AUTH STATE ===== */
 onAuthStateChanged(auth, async (u) => {
   if (u) {
     user = u;
-    console.log("Logged in:", user.email);
+    console.log("Logged in:", u.email);
+
+    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("logoutBtn").style.display = "inline-block";
+
     await loadCloud();
   } else {
-    console.log("Not logged in → redirecting");
-    signInWithRedirect(auth, provider);
+    user = null;
+    console.log("Logged out");
+
+    document.getElementById("loginBtn").style.display = "inline-block";
+    document.getElementById("logoutBtn").style.display = "none";
   }
 });
 
-/* ===== REDIRECT RESULT (SAFE) ===== */
+/* ===== HANDLE REDIRECT RESULT ===== */
 getRedirectResult(auth).catch(err =>
   console.error("Redirect error:", err.code)
 );
 
-/* ===== LOAD FROM CLOUD ===== */
+/* ===== LOGIN (USER ACTION ONLY) ===== */
+window.login = function () {
+  signInWithRedirect(auth, provider);
+};
+
+/* ===== LOGOUT ===== */
+window.logout = async function () {
+  await signOut(auth);
+};
+
+/* ===== LOAD CLOUD DATA ===== */
 async function loadCloud() {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
 
   if (snap.exists()) {
-    data = snap.data();                 // overwrite local data
+    data = snap.data();
     localStorage.setItem("unicorn", JSON.stringify(data));
     render();
   }
 }
 
-/* ===== SAVE TO CLOUD ===== */
+/* ===== SAVE CLOUD ===== */
 window.cloudSave = async function (data) {
   if (!user) return;
   await setDoc(doc(db, "users", user.uid), data);
 };
 </script>
+
 
 
 <script>
