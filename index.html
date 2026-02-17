@@ -335,7 +335,7 @@ function render(){
 }
 
 function renderLeft(){
- left.innerHTML=`<div class="card"><h3>📚 Subjects</h3>
+ left.innerHTML=`<div class="card"><h3>Subjects 📚 </h3>
  ${data.subjects.map((s,i)=>`<div class="subject ${selected===i?'active':''}" onclick="selectSub(${i})">${s.name}
  <span style="float:right" onclick="event.stopPropagation();deleteSubject(${i})">❌</span></div>`).join('')}</div>`;
 }
@@ -358,7 +358,7 @@ function renderRight(){
 
   right.innerHTML = `
     <div class="card">
-      <h3>📊 Dashboard</h3>
+      <h3>Dashboard 📊</h3>
 
       <!-- Circular Animated Overall Progress -->
       <div style="display:flex;justify-content:center;margin:30px 0;">
@@ -374,7 +374,7 @@ function renderRight(){
             <!-- Animated progress circle -->
             <circle id="progressCircle"
               cx="85" cy="85" r="70"
-              stroke="#22c55e"
+              stroke="#1f2937"
               stroke-width="14"
               fill="none"
               stroke-linecap="round"
@@ -385,16 +385,20 @@ function renderRight(){
 
           <!-- Percentage inside circle -->
           <div id="circleText"
-            style="
-              position:absolute;
-              top:50%;
-              left:50%;
-              transform:translate(-50%,-50%);
-              font-size:32px;
-              font-weight:bold;
-              color:#22c55e;">
-            0%
-          </div>
+  style="
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    font-size:32px;
+    font-weight:bold;
+    color:#22c55e;
+    text-align:center;">
+  0%
+</div>
+
 
         </div>
       </div>
@@ -423,7 +427,8 @@ function renderRight(){
     </div>
   `;
 
-  animateCircle(overallProgress);
+  showXP();
+
 }
 
 
@@ -455,6 +460,21 @@ function animateCircle(percent){
   }, 15);
 }
 
+function showXP(){
+  const circle = document.getElementById("progressCircle");
+  const text = document.getElementById("circleText");
+
+  if(!circle || !text) return;
+
+  // keep circle visually full (UI unchanged)
+  const radius = 70;
+  const circumference = 2 * Math.PI * radius;
+  circle.style.strokeDasharray = circumference;
+  circle.style.strokeDashoffset = 0;
+
+  // show XP instead of %
+  text.innerText = data.xp + " XP";
+}
 
 
 
@@ -495,7 +515,7 @@ function injectAnalytics(){
 
   right.innerHTML += `
     <div class="card">
-      <h3>📈 Live Analytics</h3>
+      <h3>Live Analytics 📈</h3>
       <canvas id="liveChart" width="300" height="180"></canvas>
     </div>
   `;
