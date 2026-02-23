@@ -153,14 +153,14 @@ button{
   <button id="installBtn" style="display:none">⬇ Install</button>
 </div>
 
-<!-- 🔥 FIREBASE AUTH (FIXED) -->
+<!-- FIREBASE AUTH -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithRedirect,
-  signInWithPopup,   // 👈 ADD THIS LINE
+  signInWithPopup,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -189,7 +189,7 @@ const provider = new GoogleAuthProvider();
 window.isLoggedIn = false;
 let user = null;
 
-/* AUTH STATE — SINGLE SOURCE OF TRUTH */
+/* AUTH STATE  */
 onAuthStateChanged(auth, async (u) => {
   if (u) {
     user = u;
@@ -241,7 +241,7 @@ function syncAuthUI(){
   logoutBtn.style.display = window.isLoggedIn ? "inline-block" : "none";
 }
 
-/* ===== DATA ===== */
+/*  DATA */
 let data=JSON.parse(localStorage.getItem("unicorn"))||{subjects:[],xp:0};
 let selected=0;
 
@@ -255,7 +255,7 @@ function toggleTheme(){
 
 /* SAVE */
 function save(){
-  calculateXP(); // ✅ always recompute XP
+  calculateXP(); // recomputes XP
   localStorage.setItem("unicorn",JSON.stringify(data));
   if(window.cloudSave) cloudSave(data);
 }
@@ -265,12 +265,12 @@ function toggle(i, j, d) {
   // toggle true/false
   t.progress[d] = !t.progress[d];
 
-  save();   // XP will be recalculated here
+  save(); 
   render();
 }
 
 
-/* PROGRESS + RENDER (UNCHANGED) */
+/* PROGRESS + RENDER*/
 function percent(t){
   let total = 0;
   let completed = 0;
@@ -319,7 +319,7 @@ function calculateXP(){
     subject.topics.forEach(topic => {
       for(let i = 1; i <= 31; i += 2){
         if(topic.progress[i] === true){
-          xp += 5; // 5 XP per completed day
+          xp += 5;
         }
       }
     });
@@ -466,20 +466,18 @@ function showXP(){
 
   if(!circle || !text) return;
 
-  // keep circle visually full (UI unchanged)
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
   circle.style.strokeDasharray = circumference;
   circle.style.strokeDashoffset = 0;
 
-  // show XP instead of %
   text.innerText = data.xp + " XP";
 }
 
 
 
 
-/* ===== LIVE ANALYTICS ===== */
+/* LIVE ANALYTICS */
 
 function drawLiveAnalytics(){
   const c = document.getElementById("liveChart");
@@ -522,7 +520,6 @@ function injectAnalytics(){
   setTimeout(drawLiveAnalytics,100);
 }
 
-/* hook analytics into render */
 const _render = render;
 render = function(){
   _render();
@@ -546,7 +543,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/* CREATE PARTICLES */
+/*PARTICLES */
 function createParticles(count = 60) {
   particles = [];
   for (let i = 0; i < count; i++) {
